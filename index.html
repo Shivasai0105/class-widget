@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Classes">
+<title>Class Schedule</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f2f2f7;
+    min-height: 100vh;
+    padding: 0 0 48px;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: #fff;
+    padding: 54px 20px 16px;
+    border-bottom: 0.5px solid #e5e5ea;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-row { display:flex; justify-content:space-between; align-items:center; }
+  .topbar-title { font-size:28px; font-weight:700; color:#1d1d1f; letter-spacing:-0.5px; }
+  .live-pill {
+    display:flex; align-items:center; gap:5px;
+    background:#e8f5e9; color:#2e7d32;
+    font-size:12px; font-weight:600;
+    padding:5px 11px; border-radius:20px;
+  }
+  .live-dot { width:7px; height:7px; background:#43a047; border-radius:50%; animation:blink 1.4s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+  .topbar-sub { font-size:13px; color:#86868b; margin-top:5px; font-weight:500; }
+
+  /* ── MAIN CARDS ── */
+  .section { padding: 18px 16px 0; }
+  .section-label {
+    font-size:11px; font-weight:700; letter-spacing:0.9px;
+    text-transform:uppercase; color:#86868b; margin-bottom:9px; padding-left:4px;
+  }
+
+  .card {
+    background:#fff; border-radius:18px;
+    padding:18px 20px; margin-bottom:12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.05);
+  }
+
+  /* CURRENT – blue tint */
+  .card.current {
+    background: #e8f1fd;
+    box-shadow: 0 2px 12px rgba(25,118,210,0.14), 0 0 0 1px rgba(25,118,210,0.18);
+  }
+  /* LAST – muted */
+  .card.last { opacity:0.82; }
+  /* NEXT – warm tint */
+  .card.next { background:#fff8f3; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(230,100,0,0.15); }
+  /* FREE / LUNCH */
+  .card.free { background:#f0faf4; }
+  /* NO CLASS */
+  .card.noclass { background:#fafafa; }
+
+  .card-tag {
+    font-size:10px; font-weight:700; letter-spacing:1px;
+    text-transform:uppercase; margin-bottom:7px;
+  }
+  .current .card-tag  { color:#1565c0; }
+  .last    .card-tag  { color:#86868b; }
+  .next    .card-tag  { color:#bf360c; }
+  .free    .card-tag  { color:#1b5e20; }
+  .noclass .card-tag  { color:#aeaeb2; }
+
+  .card-subject { font-size:21px; font-weight:700; color:#1d1d1f; letter-spacing:-0.3px; margin-bottom:8px; }
+  .current .card-subject { color:#0d47a1; }
+  .next    .card-subject { color:#bf360c; }
+  .free    .card-subject { color:#1b5e20; }
+  .noclass .card-subject { color:#aeaeb2; }
+
+  .card-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+
+  .time-chip {
+    font-size:13px; font-weight:600; padding:4px 11px; border-radius:20px;
+    background:#f2f2f7; color:#636366;
+  }
+  .current .time-chip { background:rgba(25,118,210,0.12); color:#1565c0; }
+  .next    .time-chip { background:rgba(230,100,0,0.1); color:#bf360c; }
+  .free    .time-chip { background:rgba(27,94,32,0.1); color:#1b5e20; }
+
+  .duration-chip { font-size:12px; color:#aeaeb2; font-weight:500; }
+
+  /* PROGRESS BAR */
+  .prog-wrap { margin-top:14px; }
+  .prog-track { background:rgba(25,118,210,0.12); border-radius:4px; height:5px; overflow:hidden; }
+  .prog-fill { height:100%; background:#1976d2; border-radius:4px; width:0%; transition: width 1s linear; }
+  .prog-text { margin-top:5px; font-size:11px; color:#1565c0; font-weight:600; }
+
+  /* ── FULL DAY TIMELINE ── */
+  .timeline-card {
+    background:#fff; border-radius:18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.05);
+    overflow:hidden;
+  }
+  .timeline-header {
+    padding:13px 20px; font-size:11px; font-weight:700;
+    letter-spacing:0.9px; text-transform:uppercase;
+    color:#86868b; border-bottom:0.5px solid #f2f2f7;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .day-name { font-size:13px; font-weight:600; color:#1d1d1f; letter-spacing:0; text-transform:none; }
+
+  .tl-item { display:flex; align-items:center; gap:12px; padding:11px 20px; border-bottom:0.5px solid #f7f7f9; }
+  .tl-item:last-child { border-bottom:none; }
+
+  .tl-dot { width:9px; height:9px; border-radius:50%; background:#d1d1d6; flex-shrink:0; }
+  .tl-item.done   .tl-dot { background:#c8e6c9; }
+  .tl-item.active .tl-dot { background:#1976d2; box-shadow:0 0 0 3px rgba(25,118,210,0.2); }
+  .tl-item.upcoming .tl-dot { background:#ffccbc; }
+
+  .tl-time { font-size:11px; color:#aeaeb2; min-width:78px; font-weight:500; }
+  .tl-subj { font-size:14px; color:#1d1d1f; font-weight:500; }
+  .tl-item.done   .tl-subj { color:#c7c7cc; }
+  .tl-item.active .tl-subj { color:#1565c0; font-weight:700; }
+  .tl-item.active .tl-time { color:#1565c0; }
+
+  /* ── ADD TO HOME SCREEN BANNER ── */
+  #install-banner {
+    margin:18px 16px 0; background:#fffde7; border-radius:14px;
+    padding:14px 18px; border:0.5px solid rgba(255,167,38,0.35);
+    display:none;
+  }
+  .install-top { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .install-text b { font-size:14px; color:#4e342e; display:block; margin-bottom:3px; }
+  .install-text p { font-size:12px; color:#6d4c41; }
+  .install-btn {
+    background:#ff8f00; color:#fff; border:none; border-radius:10px;
+    padding:8px 16px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; flex-shrink:0;
+  }
+  .install-close { float:right; background:none; border:none; font-size:18px; color:#bcaaa4; cursor:pointer; padding:0 0 0 8px; }
+
+  .weekend-msg { text-align:center; padding:40px 20px; color:#86868b; font-size:16px; }
+  .weekend-msg .big { font-size:48px; margin-bottom:10px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-row">
+    <div class="topbar-title">Classes</div>
+    <div class="live-pill"><span class="live-dot"></span> Live</div>
+  </div>
+  <div class="topbar-sub" id="date-sub">Loading...</div>
+</div>
+
+<div id="app-content"></div>
+
+<div id="install-banner">
+  <div class="install-top">
+    <div class="install-text">
+      <b>📌 Add to Home Screen</b>
+      <p>Tap the Share button → "Add to Home Screen" to use as a widget</p>
+    </div>
+    <button class="install-close" onclick="document.getElementById('install-banner').style.display='none'">✕</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// TIMETABLE DATA
+// Days: 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat
+// Each period: { name, start, end }  (HH:MM 24h)
+// ─────────────────────────────────────────────
+const TIMETABLE = {
+  1: [ // Monday
+    { name: "CET",     start: "09:00", end: "12:20" },
+    { name: "Lunch",   start: "12:20", end: "13:10" },
+    { name: "AI & DL", start: "13:10", end: "13:55" },
+    { name: "ML",      start: "13:55", end: "14:40" },
+    { name: "ML (T)",  start: "14:40", end: "15:25" },
+  ],
+  2: [ // Tuesday
+    { name: "CET",     start: "09:00", end: "12:20" },
+    { name: "Lunch",   start: "12:20", end: "13:10" },
+    { name: "OL",      start: "13:10", end: "13:55" },
+    { name: "WT (T)",  start: "13:55", end: "14:40" },
+    { name: "BDA",     start: "14:40", end: "15:25" },
+    { name: "BOE",     start: "15:25", end: "16:10" },
+  ],
+  3: [ // Wednesday
+    { name: "CET",     start: "09:00", end: "12:20" },
+    { name: "Lunch",   start: "12:20", end: "13:10" },
+    { name: "ML",      start: "13:10", end: "13:55" },
+    { name: "AI & DL", start: "13:55", end: "14:40" },
+    { name: "CS & CL", start: "14:40", end: "15:25" },
+    { name: "NPTEL / Library", start: "15:25", end: "16:10" },
+  ],
+  4: [ // Thursday
+    { name: "OS & ML Lab", start: "09:00", end: "12:20" },
+    { name: "Lunch",   start: "12:20", end: "13:10" },
+    { name: "AI & DL", start: "13:10", end: "13:55" },
+    { name: "BDA",     start: "13:55", end: "15:25" },
+  ],
+  5: [ // Friday
+    { name: "WT Lab",  start: "09:00", end: "10:40" },
+    { name: "Mentoring", start: "10:40", end: "12:20" },
+    { name: "Lunch",   start: "12:20", end: "13:10" },
+    { name: "OS",      start: "13:10", end: "13:55" },
+    { name: "WT",      start: "13:55", end: "14:40" },
+    { name: "CS & CL", start: "14:40", end: "15:25" },
+  ],
+  6: [ // Saturday
+    { name: "BDA",     start: "09:00", end: "09:50" },
+    { name: "OS",      start: "09:50", end: "10:40" },
+    { name: "WT",      start: "10:40", end: "11:30" },
+    { name: "ML",      start: "11:30", end: "12:20" },
+    { name: "Lunch",   start: "12:20", end: "13:10" },
+    { name: "AI & DL", start: "13:10", end: "13:55" },
+    { name: "BOE",     start: "13:55", end: "14:40" },
+    { name: "CS & CL", start: "14:40", end: "15:25" },
+    { name: "Sports",  start: "15:25", end: "16:10" },
+  ],
+};
+
+const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function toMins(hhmm) {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function fmt12(hhmm) {
+  let [h, m] = hhmm.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  if (h > 12) h -= 12;
+  if (h === 0) h = 12;
+  return `${h}:${String(m).padStart(2,"0")} ${ampm}`;
+}
+
+function durText(start, end) {
+  const mins = toMins(end) - toMins(start);
+  if (mins >= 60) {
+    const h = Math.floor(mins/60), m = mins%60;
+    return m ? `${h}h ${m}m` : `${h}h`;
+  }
+  return `${mins}m`;
+}
+
+function nowMins() {
+  const n = new Date();
+  return n.getHours() * 60 + n.getMinutes();
+}
+
+function render() {
+  const now = new Date();
+  const dow = now.getDay();
+  const nm = nowMins();
+
+  // Date subtitle
+  document.getElementById("date-sub").textContent =
+    `${DAYS[dow]}, ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+
+  const content = document.getElementById("app-content");
+
+  // Weekend
+  if (dow === 0) {
+    content.innerHTML = `<div class="weekend-msg"><div class="big">🎉</div>It's Sunday!<br><span style="font-size:14px;margin-top:8px;display:block;color:#aeaeb2">No classes today. Rest up!</span></div>`;
+    return;
+  }
+
+  const schedule = TIMETABLE[dow];
+  if (!schedule) {
+    content.innerHTML = `<div class="weekend-msg"><div class="big">📭</div>No classes found for today.</div>`;
+    return;
+  }
+
+  // Find current, last, next
+  let currentIdx = -1, lastIdx = -1, nextIdx = -1;
+
+  for (let i = 0; i < schedule.length; i++) {
+    const s = toMins(schedule[i].start), e = toMins(schedule[i].end);
+    if (nm >= s && nm < e) { currentIdx = i; break; }
+  }
+
+  // last = most recent finished period
+  for (let i = 0; i < schedule.length; i++) {
+    if (toMins(schedule[i].end) <= nm) lastIdx = i;
+  }
+
+  // next = first period not yet started
+  for (let i = 0; i < schedule.length; i++) {
+    if (toMins(schedule[i].start) > nm) { nextIdx = i; break; }
+  }
+
+  // Before classes start
+  const firstStart = toMins(schedule[0].start);
+  const lastEnd = toMins(schedule[schedule.length-1].end);
+
+  let html = "";
+
+  // ── CURRENT ──
+  html += `<div class="section"><div class="section-label">Now</div>`;
+  if (currentIdx !== -1) {
+    const p = schedule[currentIdx];
+    const elapsed = nm - toMins(p.start);
+    const total = toMins(p.end) - toMins(p.start);
+    const pct = Math.round((elapsed / total) * 100);
+    const rem = total - elapsed;
+    const remText = rem >= 60 ? `${Math.floor(rem/60)}h ${rem%60}m left` : `${rem}m left`;
+    html += `
+      <div class="card current">
+        <div class="card-tag">● Ongoing</div>
+        <div class="card-subject">${p.name}</div>
+        <div class="card-meta">
+          <span class="time-chip">${fmt12(p.start)} – ${fmt12(p.end)}</span>
+          <span class="duration-chip">${durText(p.start, p.end)}</span>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-track"><div class="prog-fill" id="prog" style="width:${pct}%"></div></div>
+          <div class="prog-text">${pct}% done · ${remText}</div>
+        </div>
+      </div>`;
+  } else if (nm < firstStart) {
+    const wait = firstStart - nm;
+    html += `<div class="card free"><div class="card-tag">Before Classes</div><div class="card-subject">Classes start soon</div><div class="card-meta"><span class="time-chip">Starts at ${fmt12(schedule[0].start)}</span><span class="duration-chip">in ${wait}m</span></div></div>`;
+  } else if (nm >= lastEnd) {
+    html += `<div class="card noclass"><div class="card-tag">Done for Today</div><div class="card-subject">All classes over</div><div class="card-meta"><span class="time-chip">Last ended ${fmt12(schedule[schedule.length-1].end)}</span></div></div>`;
+  }
+  html += `</div>`;
+
+  // ── LAST ──
+  html += `<div class="section"><div class="section-label">Last Class</div>`;
+  if (lastIdx !== -1) {
+    const p = schedule[lastIdx];
+    html += `<div class="card last"><div class="card-tag">Completed</div><div class="card-subject">${p.name}</div><div class="card-meta"><span class="time-chip">${fmt12(p.start)} – ${fmt12(p.end)}</span><span class="duration-chip">${durText(p.start,p.end)}</span></div></div>`;
+  } else {
+    html += `<div class="card noclass"><div class="card-tag">Last Class</div><div class="card-subject">—</div><div class="card-meta"><span class="time-chip">No previous class yet</span></div></div>`;
+  }
+  html += `</div>`;
+
+  // ── NEXT ──
+  html += `<div class="section"><div class="section-label">Next Class</div>`;
+  if (nextIdx !== -1) {
+    const p = schedule[nextIdx];
+    const wait = toMins(p.start) - nm;
+    const waitText = wait > 60 ? `in ${Math.floor(wait/60)}h ${wait%60}m` : `in ${wait}m`;
+    html += `<div class="card next"><div class="card-tag">Coming up ${waitText}</div><div class="card-subject">${p.name}</div><div class="card-meta"><span class="time-chip">${fmt12(p.start)} – ${fmt12(p.end)}</span><span class="duration-chip">${durText(p.start,p.end)}</span></div></div>`;
+  } else {
+    html += `<div class="card noclass"><div class="card-tag">Next Class</div><div class="card-subject">No more classes today</div><div class="card-meta"><span class="time-chip">Check tomorrow's schedule</span></div></div>`;
+  }
+  html += `</div>`;
+
+  // ── FULL DAY TIMELINE ──
+  html += `<div class="section" style="margin-top:6px;">
+    <div class="timeline-card">
+      <div class="timeline-header">
+        <span>Today's Schedule</span>
+        <span class="day-name">${DAYS[dow]}</span>
+      </div>`;
+
+  for (let i = 0; i < schedule.length; i++) {
+    const p = schedule[i];
+    const s = toMins(p.start), e = toMins(p.end);
+    let cls = "upcoming";
+    if (e <= nm) cls = "done";
+    else if (nm >= s && nm < e) cls = "active";
+    html += `<div class="tl-item ${cls}">
+      <div class="tl-dot"></div>
+      <div class="tl-time">${fmt12(p.start)} – ${fmt12(p.end)}</div>
+      <div class="tl-subj">${p.name}</div>
+    </div>`;
+  }
+  html += `</div></div>`;
+
+  content.innerHTML = html;
+}
+
+// ── Install banner logic ──
+window.addEventListener("load", () => {
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  if (!isStandalone) {
+    setTimeout(() => {
+      document.getElementById("install-banner").style.display = "block";
+    }, 2000);
+  }
+});
+
+// ── Service Worker registration ──
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+
+// ── Auto-refresh every 30 seconds ──
+render();
+setInterval(render, 30000);
+</script>
+</body>
+</html>
